@@ -8,7 +8,6 @@ import (
 	"image/color"
 	"io"
 	"os"
-	"slices"
 	"sync"
 	"sync/atomic"
 
@@ -228,6 +227,7 @@ func encode(w io.Writer, m image.Image, quality, chromaSubsampling, progressiveL
 	var data []byte
 	var colorspace int
 	var chroma int
+	var inputSize int
 
 	switch img := m.(type) {
 	case *image.Gray:
@@ -245,7 +245,6 @@ func encode(w io.Writer, m image.Image, quality, chromaSubsampling, progressiveL
 		data = img.Pix
 		colorspace = jcsCMYK
 	case *image.YCbCr:
-		data = slices.Concat(img.Y, img.Cb, img.Cr)
 		colorspace = jcsYCbCr
 		chroma = int(img.SubsampleRatio)
 	default:
@@ -256,16 +255,36 @@ func encode(w io.Writer, m image.Image, quality, chromaSubsampling, progressiveL
 
 	ctx := context.Background()
 
-	res, err := _alloc.Call(ctx, uint64(len(data)))
+	if colorspace == jcsYCbCr {
+		yuv := m.(*image.YCbCr)
+		inputSize = len(yuv.Y) + len(yuv.Cb) + len(yuv.Cr)
+	} else {
+		inputSize = len(data)
+	}
+
+	res, err := _alloc.Call(ctx, uint64(inputSize))
 	if err != nil {
 		return fmt.Errorf("alloc: %w", err)
 	}
 	inPtr := res[0]
 	defer _free.Call(ctx, inPtr)
 
-	ok := mod.Memory().Write(uint32(inPtr), data)
-	if !ok {
-		return ErrMemWrite
+	if colorspace == jcsYCbCr {
+		yuv := m.(*image.YCbCr)
+		if ok := mod.Memory().Write(uint32(inPtr), yuv.Y); !ok {
+			return ErrMemWrite
+		}
+		if ok := mod.Memory().Write(uint32(inPtr)+uint32(len(yuv.Y)), yuv.Cb); !ok {
+			return ErrMemWrite
+		}
+		if ok := mod.Memory().Write(uint32(inPtr)+uint32(len(yuv.Y))+uint32(len(yuv.Cb)), yuv.Cr); !ok {
+			return ErrMemWrite
+		}
+	} else {
+		ok := mod.Memory().Write(uint32(inPtr), data)
+		if !ok {
+			return ErrMemWrite
+		}
 	}
 
 	res, err = _alloc.Call(ctx, 8)
@@ -348,7 +367,7 @@ func initWasmModule() {
 	ctx := context.Background()
 	rt := wazero.NewRuntime(ctx)
 
-	f, err := os.Open("../lib/jpegli.wasm")
+	f, err := os.Open("jpegli.wasm")
 	if err != nil {
 		panic(err)
 	}
