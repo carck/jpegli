@@ -10,7 +10,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/gen2brain/jpegli"
+	"github.com/carck/jpegli"
 )
 
 //go:embed testdata/test.jpg
