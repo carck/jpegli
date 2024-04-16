@@ -17,10 +17,10 @@ all: $(BIN)
 $(LIBJXL_SRC):
 	git clone -b $(LIBJXL_VERSION) --depth 1 --recursive --jobs `nproc` https://github.com/libjxl/libjxl
 	echo "int main(int argc, char** argv) { return 0; }" > $(LIBJXL_SRC)/third_party/brotli/c/tools/brotli.c
-	sed -i '/^set(THREADS\|^find_package(Threads/d' $(LIBJXL_SRC)/CMakeLists.txt
-	sed -i '/^include(jxl_threads/d' $(LIBJXL_SRC)/lib/CMakeLists.txt
-	sed -i '/Threads::Threads/d' $(LIBJXL_SRC)/lib/jxl.cmake
-	sed -i '/Threads::Threads/d' $(LIBJXL_SRC)/lib/jpegli.cmake
+	sed -i '.bak' '/^set(THREADS\|^find_package(Threads/d' $(LIBJXL_SRC)/CMakeLists.txt
+	sed -i '.bak' '/^include(jxl_threads/d' $(LIBJXL_SRC)/lib/CMakeLists.txt
+	sed -i '.bak' '/Threads::Threads/d' $(LIBJXL_SRC)/lib/jxl.cmake
+	sed -i '.bak' '/Threads::Threads/d' $(LIBJXL_SRC)/lib/jpegli.cmake
 	mkdir -p $(LIBJXL_BUILD)
 	test -d $@
 

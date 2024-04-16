@@ -11,6 +11,8 @@ int decode(uint8_t *jpeg_in, int jpeg_in_size, int config_only, uint32_t *width,
 uint8_t* encode(uint8_t *in, int width, int height, int colorspace, int chroma, size_t *size, int quality, int progressive_level, int optimize_coding,
         int adaptive_quantization, int standard_quant_tables, int fancy_downsampling, int dct_method);
 
+int pad(uint32_t x, uint32_t pad);
+
 typedef enum {
     Y,
     Cb,
@@ -28,6 +30,11 @@ typedef enum {
 
 void error_exit(j_common_ptr info) {
   (*info->err->output_message)(info);
+}
+
+int pad(uint32_t x, uint32_t pad) {
+    uint32_t pp = pad - 1;
+    return (x + pp) & (~pp);
 }
 
 int decode(uint8_t *jpeg_in, int jpeg_in_size, int config_only, uint32_t *width, uint32_t *height, uint32_t *colorspace, uint32_t *chroma, uint8_t *out,
@@ -171,11 +178,11 @@ int decode(uint8_t *jpeg_in, int jpeg_in_size, int config_only, uint32_t *width,
         cb_rows = malloc(sizeof(JSAMPROW) * mcu_rows);
         cr_rows = malloc(sizeof(JSAMPROW) * mcu_rows);
 
-        y_stride = dinfo.image_width;
-        c_stride = cw;
+        y_stride = pad(dinfo.image_width, mcu_rows);
+        c_stride = pad(cw, DCTSIZE);
 
-        int i0 = dinfo.image_width * dinfo.image_height;
-        int i1 = dinfo.image_width * dinfo.image_height + 1*cw*ch;
+        int i0 = pad(dinfo.image_width, mcu_rows) * pad(dinfo.image_height, mcu_rows);
+        int i1 = i0 + 1*pad(cw, DCTSIZE) * pad(ch, DCTSIZE);
 
         y_out = &out[0];
         cb_out = &out[i0];
@@ -378,14 +385,14 @@ uint8_t* encode(uint8_t *in, int width, int height, int colorspace, int chroma, 
         cb_rows = malloc(sizeof(JSAMPROW) * c_h);
         cr_rows = malloc(sizeof(JSAMPROW) * c_h);
 
-        cw = cinfo.comp_info[Cb].downsampled_width;
-        ch = cinfo.comp_info[Cb].downsampled_height;
+        cw = pad(cinfo.comp_info[Cb].downsampled_width, c_h);
+        ch = pad(cinfo.comp_info[Cb].downsampled_height, c_h);
 
-        y_stride = width;
+        y_stride = pad(width, y_h);
         c_stride = cw;
 
-        int i0 = width * height;
-        int i1 = width * height + 1*cw*ch;
+        int i0 = pad(width, y_h) * pad(height, y_h);
+        int i1 = i0 + 1*cw*ch;
 
         y_in = &in[0];
         cb_in = &in[i0];

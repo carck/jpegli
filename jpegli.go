@@ -17,10 +17,10 @@ var (
 )
 
 // DefaultQuality is the default quality encoding parameter.
-const DefaultQuality = 75
+const DefaultQuality = 90
 
 // DefaultDCTMethod is the default DCT algorithm method.
-const DefaultDCTMethod = DCTISlow
+const DefaultDCTMethod = DCTFloat
 
 // DCTMethod is the DCT/IDCT method type.
 type DCTMethod int
@@ -202,10 +202,10 @@ func yCbCrSize(r image.Rectangle, subsampleRatio image.YCbCrSubsampleRatio) (w, 
 		ch = h
 	}
 
-	w = pad(w, alignSize) + alignSize
-	h = pad(h, alignSize) + alignSize
-	cw = pad(cw, alignSize) + alignSize
-	ch = pad(ch, alignSize) + alignSize
+	w = pad(w, alignSize)
+	h = pad(h, alignSize)
+	cw = pad(cw, 8)
+	ch = pad(ch, 8)
 
 	return
 }

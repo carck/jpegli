@@ -2,9 +2,7 @@ package jpegli
 
 import (
 	"bytes"
-	"compress/gzip"
 	"context"
-	_ "embed"
 	"fmt"
 	"image"
 	"image/color"
@@ -17,9 +15,6 @@ import (
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
-
-//go:embed lib/jpegli.wasm.gz
-var jpegliWasm []byte
 
 const (
 	jcsGrayscale = iota + 1
@@ -347,14 +342,13 @@ func initialize() {
 	ctx := context.Background()
 	rt := wazero.NewRuntime(ctx)
 
-	r, err := gzip.NewReader(bytes.NewReader(jpegliWasm))
+	f, err := os.Open("../lib/jpegli.wasm")
 	if err != nil {
 		panic(err)
 	}
-	defer r.Close()
 
 	var data bytes.Buffer
-	_, err = data.ReadFrom(r)
+	_, err = data.ReadFrom(f)
 	if err != nil {
 		panic(err)
 	}
