@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"slices"
+	"sync"
 	"sync/atomic"
 
 	"github.com/tetratelabs/wazero"
@@ -332,6 +333,7 @@ var (
 	_encode api.Function
 
 	initialized atomic.Bool
+	initModule  sync.Once
 )
 
 func initialize() {
@@ -339,6 +341,10 @@ func initialize() {
 		return
 	}
 
+	initModule.Do(initWasmModule)
+}
+
+func initWasmModule() {
 	ctx := context.Background()
 	rt := wazero.NewRuntime(ctx)
 
