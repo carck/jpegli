@@ -4,7 +4,7 @@ import (
 	"image/jpeg"
 	"os"
 
-	"github.com/gen2brain/jpegli"
+	"github.com/carck/jpegli"
 )
 
 func main() {
