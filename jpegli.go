@@ -121,6 +121,17 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	return cfg, nil
 }
 
+func EncodeQuality(q int) *EncodingOptions {
+	return &EncodingOptions{
+		Quality:              q,
+		ProgressiveLevel:     0,
+		OptimizeCoding:       true,
+		AdaptiveQuantization: true,
+		DCTMethod:            DefaultDCTMethod,
+		ChromaSubsampling:    image.YCbCrSubsampleRatio420,
+	}
+}
+
 // Encode writes the image m to w with the given options.
 func Encode(w io.Writer, m image.Image, o ...*EncodingOptions) error {
 	quality := DefaultQuality
